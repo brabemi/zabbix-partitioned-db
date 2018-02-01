@@ -73,7 +73,7 @@ CREATE TABLE trends_part_lower PARTITION OF trends
     FOR VALUES FROM (MINVALUE) TO (1516000000);
 CREATE UNIQUE INDEX trends_part_lower_1 ON trends_part_lower (itemid,clock);
 
-CREATE TABLE trends_part_15166 PARTITION OF trends
+CREATE TABLE trends_part_1516 PARTITION OF trends
     FOR VALUES FROM (1516000000) TO (1517000000);
 CREATE UNIQUE INDEX trends_part_15166_1 ON trends_part_15166 (itemid,clock);
 
@@ -97,7 +97,7 @@ CREATE TABLE trends_uint_part_lower PARTITION OF trends_uint
     FOR VALUES FROM (MINVALUE) TO (1516000000);
 CREATE UNIQUE INDEX trends_uint_part_lower_1 ON trends_uint_part_lower (itemid,clock);
 
-CREATE TABLE trends_uint_part_15166 PARTITION OF trends_uint
+CREATE TABLE trends_uint_part_1516 PARTITION OF trends_uint
     FOR VALUES FROM (1516000000) TO (1517000000);
 CREATE UNIQUE INDEX trends_uint_part_15166_1 ON trends_uint_part_15166 (itemid,clock);
 
