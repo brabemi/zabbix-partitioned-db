@@ -4,3 +4,43 @@ port = 5432
 dbname = mydatabase
 username = user
 password = Password123
+
+[history]
+table_name = history
+period = 100000
+count = 0
+part_name = history_part_
+create_index = yes
+unique_index = false
+index_postfix = _1
+index_cols = itemid,clock
+
+[history_uint]
+table_name = history_uint
+period = 100000
+count = 0
+part_name = history_uint_part_
+create_index = yes
+unique_index = false
+index_postfix = _1
+index_cols = itemid,clock
+
+[trends]
+table_name = trends
+period = 1000000
+count = 0
+part_name = trends_part_
+create_index = yes
+unique_index = yes
+index_postfix = _1
+index_cols = itemid,clock
+
+[trends_uint]
+table_name = trends_uint
+period = 1000000
+count = 0
+part_name = trends_uint_part_
+create_index = yes
+unique_index = yes
+index_postfix = _1
+index_cols = itemid,clock

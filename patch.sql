@@ -5,6 +5,7 @@
 -- 1516700000
 
 -- history
+BEGIN;
 -- DROP TABLE history;
 
 CREATE TABLE history (
@@ -26,8 +27,10 @@ CREATE INDEX history_part_15166_1 ON history_part_15166 (itemid,clock);
 CREATE TABLE history_part_upper PARTITION OF history
     FOR VALUES FROM (1516700000) TO (MAXVALUE);
 CREATE INDEX history_part_upper_1 ON history_part_upper (itemid,clock);
+END;
 
 -- history_uint
+BEGIN;
 -- DROP TABLE history_uint;
 
 CREATE TABLE history_uint (
@@ -37,18 +40,18 @@ CREATE TABLE history_uint (
         ns                       integer         DEFAULT '0'               NOT NULL
 ) PARTITION BY RANGE (clock);
 
-CREATE TABLE trends_uint_part_lower PARTITION OF trends_uint
+CREATE TABLE history_uint_part_lower PARTITION OF history_uint
     FOR VALUES FROM (MINVALUE) TO (1516600000);
-CREATE INDEX trends_uint_part_lower_1 ON trends_uint_part_lower (itemid,clock);
+CREATE INDEX history_uint_part_lower_1 ON history_uint_part_lower (itemid,clock);
 
-CREATE TABLE trends_uint_part_15166 PARTITION OF trends_uint
+CREATE TABLE history_uint_part_15166 PARTITION OF history_uint
     FOR VALUES FROM (1516600000) TO (1516700000);
 CREATE INDEX history_uint_part_15166_1 ON history_uint_part_15166 (itemid,clock);
 
 CREATE TABLE history_uint_part_upper PARTITION OF history_uint
     FOR VALUES FROM (1516700000) TO (MAXVALUE);
 CREATE INDEX history_uint_part_upper_1 ON history_uint_part_upper (itemid,clock);
-
+END;
 
 -- trends tables chunk size: 1 000 000 s = 11.5740741 days
 --    1000000
@@ -57,6 +60,7 @@ CREATE INDEX history_uint_part_upper_1 ON history_uint_part_upper (itemid,clock)
 -- 1517000000
 
 -- trends
+BEGIN;
 -- DROP TABLE trends;
 
 CREATE TABLE trends (
@@ -75,13 +79,15 @@ CREATE UNIQUE INDEX trends_part_lower_1 ON trends_part_lower (itemid,clock);
 
 CREATE TABLE trends_part_1516 PARTITION OF trends
     FOR VALUES FROM (1516000000) TO (1517000000);
-CREATE UNIQUE INDEX trends_part_15166_1 ON trends_part_15166 (itemid,clock);
+CREATE UNIQUE INDEX trends_part_1516_1 ON trends_part_1516 (itemid,clock);
 
 CREATE TABLE trends_part_upper PARTITION OF trends
     FOR VALUES FROM (1517000000) TO (MAXVALUE);
 CREATE UNIQUE INDEX trends_part_upper_1 ON trends_part_upper (itemid,clock);
+END;
 
 -- trends_uint
+BEGIN;
 -- DROP TABLE trends_uint;
 
 CREATE TABLE trends_uint (
@@ -99,8 +105,9 @@ CREATE UNIQUE INDEX trends_uint_part_lower_1 ON trends_uint_part_lower (itemid,c
 
 CREATE TABLE trends_uint_part_1516 PARTITION OF trends_uint
     FOR VALUES FROM (1516000000) TO (1517000000);
-CREATE UNIQUE INDEX trends_uint_part_15166_1 ON trends_uint_part_15166 (itemid,clock);
+CREATE UNIQUE INDEX trends_uint_part_1516_1 ON trends_uint_part_1516 (itemid,clock);
 
 CREATE TABLE trends_uint_part_upper PARTITION OF trends_uint
     FOR VALUES FROM (1517000000) TO (MAXVALUE);
 CREATE UNIQUE INDEX trends_uint_part_upper_1 ON trends_uint_part_upper (itemid,clock);
+END;

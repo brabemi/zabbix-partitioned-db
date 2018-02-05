@@ -4,8 +4,7 @@ import time
 
 import click
 import psycopg2
-
-from pprint import pprint
+from psycopg2 import sql
 
 def check_database_cfg(cfg_db):
     db_params = [
@@ -92,6 +91,91 @@ def get_new_indexes(tables, uniq, postfix, cols):
         })
     return indexes
 
+def task_sql(cfg_task, db, tables, indexes):
+    if not tables:
+        return
+
+    parent_table = cfg_task['table_name']
+    part_name = cfg_task['part_name']
+    index_postfix = cfg_task['index_postfix']
+    create_index = cfg_task.getboolean('create_index')
+    curr = db.cursor()
+
+    try:
+        part_upper = part_name + 'upper'
+        curr.execute(
+            sql.SQL('ALTER TABLE {} DETACH PARTITION {};')
+            .format(sql.Identifier(parent_table), sql.Identifier(part_upper))
+        )
+        print(curr.query)
+        curr.execute(
+            sql.SQL('ALTER TABLE {} RENAME TO {};')
+            .format(sql.Identifier(part_upper), sql.Identifier(part_upper + '_old'))
+        )
+        print(curr.query)
+        if create_index:
+            curr.execute(
+                sql.SQL('ALTER TABLE {} RENAME TO {};')
+                .format(sql.Identifier(part_upper + index_postfix), sql.Identifier(part_upper + '_old' + index_postfix))
+            )
+            print(curr.query)
+
+        for t in tables:
+            curr.execute(
+                sql.SQL('CREATE TABLE {} PARTITION OF {} FOR VALUES FROM (%s) TO (%s);')
+                .format(sql.Identifier(t['name']), sql.Identifier(parent_table)),
+                (t['low'], t['up'])
+            )
+            print(curr.query)
+
+        for i in indexes:
+            query = 'CREATE {}'.format('UNIQUE ' if i['uniq'] else '') + 'INDEX {} ON {} ({});'
+            curr.execute(
+                sql.SQL(query).format(
+                    sql.Identifier(i['name']),
+                    sql.Identifier(i['table_name']),
+                    sql.SQL(', ').join(map(sql.Identifier, i['cols'])),
+                )
+            )
+            print(curr.query)
+
+        max_table = max(tables, key=lambda e: e['up'])
+        curr.execute(
+            sql.SQL('CREATE TABLE {} PARTITION OF {} FOR VALUES FROM (%s) TO (MAXVALUE);')
+            .format(sql.Identifier(part_upper), sql.Identifier(parent_table)),
+            (max_table['up'],)
+        )
+        print(curr.query)
+
+        if create_index:
+            unique_index = cfg_task.getboolean('unique_index')
+            index_cols = re.split(r'\W+', cfg_task['index_cols'])
+            query = 'CREATE {}'.format('UNIQUE ' if unique_index else '') + 'INDEX {} ON {} ({});'
+            curr.execute(
+                sql.SQL(query).format(
+                    sql.Identifier(part_upper + index_postfix),
+                    sql.Identifier(part_upper),
+                    sql.SQL(', ').join(map(sql.Identifier, index_cols)),
+                )
+            )
+            print(curr.query)
+
+        curr.execute(
+            sql.SQL('INSERT INTO {} SELECT * FROM {};')
+            .format(sql.Identifier(parent_table), sql.Identifier(part_upper + '_old'))
+        )
+        print(curr.query)
+        curr.execute(
+            sql.SQL('DROP TABLE {};')
+            .format(sql.Identifier(part_upper + '_old'))
+        )
+        print(curr.query)
+        db.commit()
+    except psycopg2.Error as e:
+        # TODO process properly
+        print(e)
+        db.rollback()
+
 def task(cfg_task, taskname, db):
     if not check_task_cfg(cfg_task, taskname):
         print('Unable to procces task {}'.format(taskname))
@@ -111,7 +195,7 @@ def task(cfg_task, taskname, db):
         print('Fail max_no: {} > part_no: {} + count: {}'.format(max_no, part_no, count))
         return
 
-    new_tables = get_new_tables(max_no, part_no + count, part_name, period)
+    new_tables = get_new_tables(max_no + 1, part_no + count, part_name, period)
 
     create_index = cfg_task.getboolean('create_index')
     new_indexes = []
@@ -121,18 +205,7 @@ def task(cfg_task, taskname, db):
         index_cols = re.split(r'\W+', cfg_task['index_cols'])
         new_indexes = get_new_indexes(new_tables, unique_index, index_postfix, index_cols)
 
-    pprint(new_tables)
-    pprint(new_indexes)
-
-    parent_table = cfg_task['table_name']
-
-    # TODO: sql task
-    # unix timestamp / period -> --  1516614109 / 1000000 = 1516
-    # find the newest partition like  part_name + %
-    # select tablename from pg_tables where name like 'history_part_%';
-    # there should be history_part_lower, history_part_upper, history_part_1500
-    #
-
+    task_sql(cfg_task, db, new_tables, new_indexes)
 
 @click.command()
 @click.option(
