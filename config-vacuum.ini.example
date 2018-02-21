@@ -1,0 +1,43 @@
+[database]
+host = localhost
+port = 5432
+dbname = mydatabase
+username = user
+password = Password123
+
+[history]
+table_name = history
+period = 100000
+part_name = history_part_
+; vacuumed parts current 1234, 0 -> vacuum 1233, 4 -> vacuum 1229
+vacuum_period = 0,7,14,30
+; vacuuming script runs once per hour
+; it doesn't make sense vacuum every hour
+; 0-12345 -> vacuuming only if current time minus delay is between 0 and 12345 in period
+vacuum_window = 0-100000
+; data can be stored to database with some delay
+vacuum_delay = 10000
+
+[history_uint]
+table_name = history_uint
+period = 100000
+part_name = history_uint_part_
+vacuum_period = 0,7,14,30
+vacuum_window = 0-100000
+vacuum_delay = 10000
+
+[trends]
+table_name = trends
+period = 1000000
+part_name = trends_part_
+vacuum_period = 0,9,35
+vacuum_window = 0-100000
+vacuum_delay = 100000
+
+[trends_uint]
+table_name = trends_uint
+period = 1000000
+part_name = trends_uint_part_
+vacuum_period = 0,9,35
+vacuum_window = 0-100000
+vacuum_delay = 100000
