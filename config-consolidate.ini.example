@@ -1,0 +1,18 @@
+[database]
+host = localhost
+port = 5432
+dbname = mydatabase
+username = user
+password = Password123
+
+[history]
+table_name = history
+period = 100000
+history_count = 30
+part_name = history_part_
+
+[history_uint]
+table_name = history_uint
+period = 100000
+history_count = 30
+part_name = history_uint_part_
